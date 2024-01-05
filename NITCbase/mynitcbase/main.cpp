@@ -19,6 +19,10 @@ int main(int argc, char *argv[]) {
   relCatBuffer.getHeader(&relCatHeader);
   attrCatBuffer.getHeader(&attrCatHeader);
 
+  RecBuffer attrCatBuffer2(attrCatHeader.rblock);
+  HeadInfo attrCatHeader2;
+  attrCatBuffer2.getHeader(&attrCatHeader2);
+
   for(int i = 0; i < relCatHeader.numEntries; i++) {
     Attribute relCatRecord[RELCAT_NO_ATTRS];
     relCatBuffer.getRecord(relCatRecord, i);
@@ -28,6 +32,15 @@ int main(int argc, char *argv[]) {
     for(int j = 0; j < attrCatHeader.numEntries; j++) {
       Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
       attrCatBuffer.getRecord(attrCatRecord, j);
+
+      if(strcmp(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal, relCatRecord[RELCAT_REL_NAME_INDEX].sVal) == 0) {
+        const char *attrType = attrCatRecord[ATTRCAT_ATTR_TYPE_INDEX].nVal == NUMBER ? "NUM":"STR";
+        printf(" %s: %s\n", attrCatRecord[ATTRCAT_ATTR_NAME_INDEX].sVal, attrType);
+      }
+    }
+    for(int j = 0; j < attrCatHeader2.numEntries; j++) {
+      Attribute attrCatRecord[ATTRCAT_NO_ATTRS];
+      attrCatBuffer2.getRecord(attrCatRecord, j);
 
       if(strcmp(attrCatRecord[ATTRCAT_REL_NAME_INDEX].sVal, relCatRecord[RELCAT_REL_NAME_INDEX].sVal) == 0) {
         const char *attrType = attrCatRecord[ATTRCAT_ATTR_TYPE_INDEX].nVal == NUMBER ? "NUM":"STR";

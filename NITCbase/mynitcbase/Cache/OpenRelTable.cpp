@@ -101,6 +101,33 @@ OpenRelTable::OpenRelTable() {
     // set the value at AttrCacheTable::attrCache[ATTRCAT_RELID]
     last->next = nullptr;
     AttrCacheTable::attrCache[ATTRCAT_RELID] = head;
+
+
+    // s3 mod
+    relCatBlock.getRecord(relCatRecord, 2);
+    RelCacheTable::recordToRelCatEntry(relCatRecord, &relCacheEntry.relCatEntry);
+    relCacheEntry.recId.block = RELCAT_BLOCK;
+    relCacheEntry.recId.slot = 2;
+    RelCacheTable::relCache[2] = (struct RelCacheEntry*)malloc(sizeof(RelCacheEntry));
+    *(RelCacheTable::relCache[2]) = relCacheEntry;  
+
+    for(int i = 0; i < relCatRecord[RELCAT_NO_ATTRIBUTES_INDEX].nVal; i++) {
+        attrCatBlock.getRecord(attrCatRecord, 12 + i);
+        struct AttrCacheEntry* attrCacheEntry = (struct AttrCacheEntry*)malloc(sizeof(AttrCacheEntry));
+        AttrCacheTable::recordToAttrCatEntry(attrCatRecord, &attrCacheEntry->attrCatEntry);
+        attrCacheEntry->recId.block = ATTRCAT_BLOCK;
+        attrCacheEntry->recId.slot = 12 + i;
+        if(i == 0) {
+            head = attrCacheEntry;
+            last = attrCacheEntry;
+        }
+        else {
+            last->next = attrCacheEntry;
+            last = attrCacheEntry;
+        }
+    }
+    last->next = nullptr;
+    AttrCacheTable::attrCache[2] = head;
 }
 
 OpenRelTable::~OpenRelTable() {

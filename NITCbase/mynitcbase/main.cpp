@@ -9,19 +9,5 @@ int main(int argc, char *argv[]) {
   StaticBuffer buffer;
   OpenRelTable cache;
 
-  RelCatEntry rce;
-  AttrCatEntry ace;
-
-  for(int i = 0; i < 3; i++) {
-    RelCacheTable::getRelCatEntry(i, &rce);
-    printf("Relation: %s\n", rce.relName);
-
-    for(int j = 0; j < rce.numAttrs; j++) {
-      AttrCacheTable::getAttrCatEntry(i, j, &ace);
-      printf("  %s: %s\n", ace.attrName, (ace.attrType == NUMBER) ? "NUM" : "STR");
-    }
-    printf("\n");
-  }
-
-  return 0;
+  return FrontendInterface::handleFrontend(argc, argv);
 }

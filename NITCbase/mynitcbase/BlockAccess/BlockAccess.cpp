@@ -624,21 +624,21 @@ int BlockAccess::deleteRelation(char relName[ATTR_SIZE]) {
             */
 
             // create a RecBuffer for lblock and call appropriate methods
-            RecBuffer recBuffer(header.lblock);
+            RecBuffer leftBuffer(header.lblock);
             struct HeadInfo leftHeader;
-            recBuffer.getHeader(&leftHeader);
+            leftBuffer.getHeader(&leftHeader);
             leftHeader.rblock = header.rblock;
-            recBuffer.setHeader(&leftHeader);
+            leftBuffer.setHeader(&leftHeader);
 
             if (header.rblock != -1) {
                 /* Get the header of the right block and set it's lblock to
                    this block's lblock */
                 // create a RecBuffer for rblock and call appropriate methods
-                RecBuffer recBuffer(header.rblock);
+                RecBuffer rightBuffer(header.rblock);
                 struct HeadInfo rightHeader;
-                recBuffer.getHeader(&rightHeader);
+                rightBuffer.getHeader(&rightHeader);
                 rightHeader.lblock = header.lblock;
-                recBuffer.setHeader(&rightHeader);
+                rightBuffer.setHeader(&rightHeader);
             } else {
                 // (the block being released is the "Last Block" of the relation.)
                 /* update the Relation Catalog entry's LastBlock field for this

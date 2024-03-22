@@ -470,29 +470,43 @@ int BlockAccess::insert(int relId, Attribute *record) {
     return SUCCESS;
 }
 
-/*
-NOTE: This function will copy the result of the search to the `record` argument.
-      The caller should ensure that space is allocated for `record` array
-      based on the number of attributes in the relation.
-*/
 int BlockAccess::search(int relId, Attribute *record, char attrName[ATTR_SIZE], Attribute attrVal, int op) {
     // Declare a variable called recid to store the searched record
     RecId recId;
 
-    /* search for the record id (recid) corresponding to the attribute with
-    attribute name attrName, with value attrval and satisfying the condition op
-    using linearSearch() */
-    recId = linearSearch(relId, attrName, attrVal, op);
+    /* get the attribute catalog entry from the attribute cache corresponding
+    to the relation with Id=relid and with attribute_name=attrName  */
+    AttrCatEntry attrCatEntry;
+    int ret = AttrCacheTable::getAttrCatEntry(relId, attrName, &attrCatEntry);
 
-    // if there's no record satisfying the given condition (recId = {-1, -1})
-    //    return E_NOTFOUND;
-    if (recId.block == -1 && recId.slot == -1)
-    {
-        return E_NOTFOUND;
+    // if this call returns an error, return the appropriate error code
+    if(ret != SUCCESS)
+        return ret;
+
+    // get rootBlock from the attribute catalog entry
+    int rootBlock = attrCatEntry.rootBlock;
+    if(rootBlock == -1) {
+        /* search for the record id (recid) corresponding to the attribute with
+           attribute name attrName, with value attrval and satisfying the
+           condition op using linearSearch()
+        */
+        recId = linearSearch(relId, attrName, attrVal, op);
+    } else {
+        // (index exists for the attribute)
+
+        /* search for the record id (recid) correspoding to the attribute with
+        attribute name attrName and with value attrval and satisfying the
+        condition op using BPlusTree::bPlusSearch() */
+        recId = BPlusTree::bPlusSearch(relId, attrName, attrVal, op);
     }
 
-    /* Copy the record with record id (recId) to the record buffer (record)
-       For this Instantiate a RecBuffer class object using recId and
+    // if there's no record satisfying the given condition (recId = {-1, -1})
+    //     return E_NOTFOUND;
+    if (recId.block == -1 && recId.slot == -1)
+        return E_NOTFOUND;
+
+    /* Copy the record with record id (recId) to the record buffer (record).
+       For this, instantiate a RecBuffer class object by passing the recId and
        call the appropriate method to fetch the record
     */
     RecBuffer recBuffer(recId.block);
@@ -624,21 +638,21 @@ int BlockAccess::deleteRelation(char relName[ATTR_SIZE]) {
             */
 
             // create a RecBuffer for lblock and call appropriate methods
-            RecBuffer recBuffer(header.lblock);
+            RecBuffer leftBuffer(header.lblock);
             struct HeadInfo leftHeader;
-            recBuffer.getHeader(&leftHeader);
+            leftBuffer.getHeader(&leftHeader);
             leftHeader.rblock = header.rblock;
-            recBuffer.setHeader(&leftHeader);
+            leftBuffer.setHeader(&leftHeader);
 
             if (header.rblock != -1) {
                 /* Get the header of the right block and set it's lblock to
                    this block's lblock */
                 // create a RecBuffer for rblock and call appropriate methods
-                RecBuffer recBuffer(header.rblock);
+                RecBuffer rightBuffer(header.rblock);
                 struct HeadInfo rightHeader;
-                recBuffer.getHeader(&rightHeader);
+                rightBuffer.getHeader(&rightHeader);
                 rightHeader.lblock = header.lblock;
-                recBuffer.setHeader(&rightHeader);
+                rightBuffer.setHeader(&rightHeader);
             } else {
                 // (the block being released is the "Last Block" of the relation.)
                 /* update the Relation Catalog entry's LastBlock field for this

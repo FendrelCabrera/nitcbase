@@ -1,6 +1,9 @@
 #include "BlockAccess.h"
-
+#include <iostream>
 #include <cstring>
+
+using std::cout;
+using std::endl;
 
 RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attribute attrVal, int op) {
     // get the previous search index of the relation relId from the relation cache
@@ -10,6 +13,7 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
 
     // let block and slot denote the record id of the record being currently checked
     int block, slot;
+    static int searchCount;
 
     // if the current search index record is invalid(i.e. both block and slot = -1)
     if (prevRecId.block == -1 && prevRecId.slot == -1)
@@ -26,6 +30,7 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
         // slot = 0
         block = relCatEntry.firstBlk;
         slot = 0;
+        searchCount = 0;
     }
     else
     {
@@ -77,7 +82,7 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
             slot++;
             continue;
         }
-
+        searchCount++;
         // compare record's attribute value to the the given attrVal as below:
         /*
             firstly get the attribute offset for the attrName attribute
@@ -121,6 +126,7 @@ RecId BlockAccess::linearSearch(int relId, char attrName[ATTR_SIZE], union Attri
         slot++;
     }
 
+    cout << "Number of linear searches performed: " << searchCount << endl;
     // no record in the relation with Id relid satisfies the given condition
     return RecId{-1, -1};
 }

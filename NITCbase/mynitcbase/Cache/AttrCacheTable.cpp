@@ -170,3 +170,68 @@ int AttrCacheTable::resetSearchIndex(int relId, int attrOffset) {
     IndexId searchIndex = {-1, -1};
     return setSearchIndex(relId, attrOffset, &searchIndex);
 }
+
+int AttrCacheTable::setAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCatEntry *attrCatBuf) {
+    if(relId < 0 || relId >= MAX_OPEN) {
+        return E_OUTOFBOUND;
+    }
+
+    if(attrCache[relId] == nullptr) {
+        return E_RELNOTOPEN;
+    }
+
+    for(AttrCacheEntry* entry = attrCache[relId]; entry != nullptr; entry = entry->next)
+    {
+        if(strcmp(entry->attrCatEntry.attrName, attrName) == 0)
+        {
+            // copy the attrCatBuf to the corresponding Attribute Catalog entry in
+            // the Attribute Cache Table.
+            entry->attrCatEntry = *attrCatBuf;
+
+            // set the dirty flag of the corresponding Attribute Cache entry in the
+            // Attribute Cache Table.
+            entry->dirty = true;
+
+            return SUCCESS;
+        }
+    }
+
+    return E_ATTRNOTEXIST;
+}
+
+int AttrCacheTable::setAttrCatEntry(int relId, int attrOffset, AttrCatEntry *attrCatBuf) {
+    if(relId < 0 || relId >= MAX_OPEN) {
+        return E_OUTOFBOUND;
+    }
+
+    if(attrCache[relId] == nullptr) {
+        return E_RELNOTOPEN;
+    }
+
+    for(AttrCacheEntry* entry = attrCache[relId]; entry != nullptr; entry = entry->next)
+    {
+        if(entry->attrCatEntry.offset == attrOffset)
+        {
+            // copy the attrCatBuf to the corresponding Attribute Catalog entry in
+            // the Attribute Cache Table.
+            entry->attrCatEntry = *attrCatBuf;
+
+            // set the dirty flag of the corresponding Attribute Cache entry in the
+            // Attribute Cache Table.
+            entry->dirty = true;
+
+            return SUCCESS;
+        }
+    }
+
+    return E_ATTRNOTEXIST;
+}
+
+void AttrCacheTable::attrCatEntryToRecord(AttrCatEntry *attrCatEntry, union Attribute record[ATTRCAT_NO_ATTRS]) {
+    strcpy(record[ATTRCAT_REL_NAME_INDEX].sVal, attrCatEntry->relName);
+    strcpy(record[ATTRCAT_ATTR_NAME_INDEX].sVal, attrCatEntry->attrName);
+    record[ATTRCAT_ATTR_TYPE_INDEX].nVal = attrCatEntry->attrType;
+    record[ATTRCAT_OFFSET_INDEX].nVal = attrCatEntry->offset;
+    record[ATTRCAT_PRIMARY_FLAG_INDEX].nVal = attrCatEntry->primaryFlag;
+    record[ATTRCAT_ROOT_BLOCK_INDEX].nVal = attrCatEntry->rootBlock;
+}

@@ -118,7 +118,8 @@ int Frontend::select_attrlist_from_join_where(
 
     // Call join() method of the Algebra Layer with correct arguments to
     // create a temporary target relation with name TEMP.
-    int ret = Algebra::join(relname_source_one, relname_source_two, TEMP, join_attr_one, join_attr_two);
+    char tempRelName[] = TEMP;
+    int ret = Algebra::join(relname_source_one, relname_source_two, tempRelName, join_attr_one, join_attr_two);
 
     // TEMP results from the join of the two source relation (and hence it
     // contains all attributes of the source relations except the join attribute
@@ -132,17 +133,17 @@ int Frontend::select_attrlist_from_join_where(
     // Open the TEMP relation using OpenRelTable::openRel()
     // if open fails, delete TEMP relation using Schema::deleteRel() and
     // return the error code
-    int temp_rel = OpenRelTable::openRel(TEMP);
+    int temp_rel = OpenRelTable::openRel(tempRelName);
 
     // Call project() method of the Algebra Layer with correct arguments to
     // create the actual target relation from the TEMP relation.
     // (The final target relation contains only those attributes mentioned in attr_list)
-    ret = Algebra::project(TEMP, relname_target, attr_count, attr_list);
+    ret = Algebra::project(tempRelName, relname_target, attr_count, attr_list);
 
     // close the TEMP relation using OpenRelTable::closeRel()
     // delete the TEMP relation using Schema::deleteRel()
     OpenRelTable::closeRel(temp_rel);
-    Schema::deleteRel(TEMP);
+    Schema::deleteRel(tempRelName);
 
     // Return Success or Error values appropriately
     return ret;
